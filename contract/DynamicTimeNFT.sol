@@ -15,11 +15,7 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 // ./interfaces/KeeperCompatibleInterface.sol
 import "@chainlink/contracts/src/v0.8/KeeperCompatible.sol";
 
-// Dev imports
-import "hardhat/console.sol";
-
-
-contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, KeeperCompatibleInterface, Ownable  {
+contract DynamicTimeNFT is ERC721, ERC721URIStorage, KeeperCompatibleInterface, Ownable  {
     using Counters for Counters.Counter;
 
     Counters.Counter private _tokenIdCounter;
@@ -33,18 +29,14 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
 
     DayPhase public dayPhase;
 
-    /**
-    * Use an interval in seconds and a timestamp to slow execution of Upkeep
-    */
     uint public /* immutable */ interval; 
     uint public lastTimeStamp;
 
     uint256 public currentPrice;
     uint256 public latest;
     
-    // IPFS URIs for the dynamic nft graphics/metadata.
-    // NOTE: These connect to my IPFS Companion node.
-    // You should upload the contents of the /ipfs folder to your own node for development.
+    // IPFS URIs for the dynamic nft metadata.
+
     string[] IpfsUris = [
         "https://gateway.pinata.cloud/ipfs/QmQjX4Y9Re5dNPmm7MqhFbkUTyfRvfigitHLahHsCPUvBn/morning.json",
         "https://gateway.pinata.cloud/ipfs/QmQjX4Y9Re5dNPmm7MqhFbkUTyfRvfigitHLahHsCPUvBn/afternoon.json",
@@ -53,10 +45,6 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
     ];
 
 
-    event TokensUpdated(string marketTrend);
-
-    // For testing with the mock on Rinkeby, pass in 10(seconds) for `updateInterval` and the address of my 
-    // deployed  MockPriceFeed.sol contract (0xD753A1c190091368EaC67bbF3Ee5bAEd265aC420).
     constructor(uint updateInterval) ERC721("DynamicTime", "DMT") {
         // Set the keeper update interval
         interval = updateInterval; 
@@ -64,20 +52,17 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
     }
 
     function safeMint(address to) public  {
-        // Current counter value will be the minted token's token ID.
+
         uint256 tokenId = _tokenIdCounter.current();
 
-        // Increment it so next time it's correct when we call .current()
         _tokenIdCounter.increment();
 
-        // Mint the token
         _safeMint(to, tokenId);
 
         // Default to a bull NFT
-        string memory defaultUri = IpfsUris[1];
+        string memory defaultUri = IpfsUris[0];
         _setTokenURI(tokenId, defaultUri);
 
-        console.log("DONE!!! minted token ", tokenId, " and assigned token url: ", defaultUri);
     }
 
     function checkUpkeep(bytes calldata /* checkData */) external view override returns (bool upkeepNeeded, bytes memory /*performData */) {
@@ -86,7 +71,6 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
     }
 
     function performUpkeep(bytes calldata /* performData */ ) external override {
-        //We highly recommend revalidating the upkeep in the performUpkeep function
         
         if ((block.timestamp - lastTimeStamp) > interval ) {
             lastTimeStamp = block.timestamp;         
@@ -94,43 +78,34 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
 
             if (dayPhase == DayPhase.morning) {
                 // morning
-                console.log("ITS Morning TIME");
                 updateAllTokenUris(0);
                 dayPhase = DayPhase.noon;
 
             } else if(dayPhase == DayPhase.noon) {
                 // noon
-                console.log("ITS BULL TIME");
                 updateAllTokenUris(1);
                 dayPhase = DayPhase.evening;
             }
 
             else if(dayPhase == DayPhase.evening) {
                 // evening
-                console.log("ITS BULL TIME");
                 updateAllTokenUris(2);
                 dayPhase = DayPhase.night;
             }
 
             else if(dayPhase == DayPhase.night) {
                 // night
-                console.log("ITS BULL TIME");
                 updateAllTokenUris(3);
                 dayPhase = DayPhase.morning;
             }
 
             // update currentPrice
-        } else {
-            console.log(
-                " INTERVAL NOT UP!"
-            );
+        } 
             return;
         }
 
-       
-    }
 
-    // Helpers
+    // Helper Functions
    
     function updateAllTokenUris(uint id) internal {
 
@@ -153,7 +128,7 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
     // The following functions are overrides required by Solidity.
     function _beforeTokenTransfer(address from, address to, uint256 tokenId)
         internal
-        virtual override(ERC721/*, ERC721Enumerable*/)
+        virtual override(ERC721)
     {
         super._beforeTokenTransfer(from, to, tokenId);
     }
@@ -174,10 +149,9 @@ contract DynamicTimeNFT is ERC721/*, ERC721Enumerable*/, ERC721URIStorage, Keepe
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721/*, ERC721Enumerable*/)
+        override(ERC721)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
     }
 }
-//check

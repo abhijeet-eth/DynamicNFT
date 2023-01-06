@@ -59,7 +59,7 @@ contract DynamicTimeNFT is ERC721, ERC721URIStorage, KeeperCompatibleInterface, 
 
         _safeMint(to, tokenId);
 
-        // Default to a bull NFT
+        // Default to a time NFT
         string memory defaultUri = IpfsUris[0];
         _setTokenURI(tokenId, defaultUri);
 
